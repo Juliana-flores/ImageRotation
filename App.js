@@ -1,12 +1,64 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React from "react";
+import { StyleSheet, Text, View, TouchableOpacity, Image } from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 
-export default function App() {
+export default function ImagePickerApp() {
+  const [selectedImage, setSelectedImage] = React.useState("");
+  let openImagePickerAsync = async () => {
+    let permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permissionResult.granted === false) {
+      alert("Permission to access camera roll is required!");
+      return;
+    }
+
+    let pickerResult = await ImagePicker.launchImageLibraryAsync();
+    
+    if(pickerResult.cancelled == false){
+      setSelectedImage(pickerResult.uri);
+    }else {
+      alert('Upload a picture please')
+    }
+    
+  };
+
+  const rotate = async () => {
+    try {
+      const manipResult = await ImageManipulator.manipulateAsync(
+        selectedImage,
+        [{ flip: ImageManipulator.FlipType.Vertical }],
+        { compress: 1, format: ImageManipulator.SaveFormat.PNG }
+      );
+      setSelectedImage(manipResult.uri);
+    } catch (error) {
+      alert(`Erro: ${JSON.stringify(error)}`)
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
+      {selectedImage == "" ? (
+        <View>
+          <TouchableOpacity
+            onPress={openImagePickerAsync}
+            style={styles.button}>
+            <Text style={{ color: "#eeb585" }}>Upload a picture</Text>
+          </TouchableOpacity>
+        </View>
+        ) : (
+        <View style={{ alignItems: "center" }}>
+          <Image
+            source={{ uri: selectedImage }}
+            style={styles.image}
+          />
+          <TouchableOpacity
+            onPress={rotate}
+            style={styles.button}>
+            <Text style={{ color: "#eeb585" }}>Rotate image</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 }
@@ -14,8 +66,21 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#eeb585",
+    justifyContent: "center",
+    alignItems:'center'
   },
-});
+  button: {
+    marginTop: 30,
+    paddingHorizontal: 30,
+    paddingVertical: 20,
+    borderRadius: 10,
+    backgroundColor: "black",
+  },
+  image: {
+    width: 300, 
+    height: 300, 
+    marginTop: 20, 
+    borderRadius: 10
+  }
+})
